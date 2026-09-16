@@ -15,7 +15,7 @@ Jedna implementacija Fault-Tolerant FIR filtra u jeziku VHDL. Na MAC jedinice pr
 Da biste rekreirali kompletan Vivado projekat:
 
 1. Otvorite **Vivado (2024.1)** i pokrenite **Tcl Console** (ili izaberite `Tools -> Run Tcl Script...`).
-2. Podesite radni direktorijum na scripts/ i pokrenite skriptu:
+2. Pokrenite sledeće komande u tcl konzoli:
 
 ```tcl
 cd <putanja_do_otpakovanog_foldera>/dsong
