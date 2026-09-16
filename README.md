@@ -18,5 +18,5 @@ Da biste rekreirali kompletan Vivado projekat:
 2. Pokrenite sledeće komande u tcl konzoli:
 
 ```tcl
-cd <putanja_do_otpakovanog_foldera>/dsong
-source ./scripts/create_project.tcl
+cd <putanja_do_otpakovanog_foldera>/dsong/scripts
+source build_project.tcl
