@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.std_logic_unsigned.all;
+use ieee.math_real.all;
 use std.textio.all;
 
 use work.voter_pkg.all;
@@ -26,15 +27,15 @@ architecture behavioral of fir_filter_ft_tb is
     signal clk           : std_logic := '0';
     signal reset         : std_logic := '0';
     
-    signal s_axis_tdata  : std_logic_vector(IN_WIDTH - 1 downto 0) := (others => '0');
-    signal s_axis_tvalid : std_logic := '0';
-    signal s_axis_tready : std_logic;
-    signal s_axis_tlast  : std_logic := '0';
+    signal in_tdata  : std_logic_vector(IN_WIDTH - 1 downto 0) := (others => '0');
+    signal in_tvalid : std_logic := '0';
+    signal in_tready : std_logic;
+    signal in_tlast  : std_logic := '0';
     
-    signal m_axis_tdata  : std_logic_vector(OUT_WIDTH - 1 downto 0);
-    signal m_axis_tvalid : std_logic;
-    signal m_axis_tready : std_logic := '1';
-    signal m_axis_tlast  : std_logic;
+    signal out_tdata  : std_logic_vector(OUT_WIDTH - 1 downto 0);
+    signal out_tvalid : std_logic;
+    signal out_tready : std_logic := '0';
+    signal out_tlast  : std_logic;
     
     signal write_en : std_logic := '0';
     signal coef_addr_i : std_logic_vector(log2c(FILTER_ORDER+1)-1 downto 0);
@@ -46,6 +47,8 @@ architecture behavioral of fir_filter_ft_tb is
     file input_coef          : text open read_mode is "coef.txt";
     
     constant LATENCY : natural := FILTER_ORDER + 2;
+    
+    
 
 begin
 
@@ -61,14 +64,14 @@ begin
         port map (
             clk => clk,
             reset => reset,
-            s_axis_tdata => s_axis_tdata,
-            s_axis_tvalid => s_axis_tvalid,
-            s_axis_tready => s_axis_tready,
-            s_axis_tlast => s_axis_tlast,
-            m_axis_tdata => m_axis_tdata,
-            m_axis_tvalid => m_axis_tvalid,
-            m_axis_tready => m_axis_tready,
-            m_axis_tlast => m_axis_tlast,
+            in_tdata => in_tdata,
+            in_tvalid => in_tvalid,
+            in_tready => in_tready,
+            in_tlast => in_tlast,
+            out_tdata => out_tdata,
+            out_tvalid => out_tvalid,
+            out_tready => out_tready,
+            out_tlast => out_tlast,
             write_en => write_en,
             coef_addr_i => coef_addr_i,
             coef_i => coef_i
@@ -82,10 +85,29 @@ begin
         clk <= '1';
         wait for PERIOD / 2;
     end process;
+    
+    m_ready_gen_process : process
+        variable seed1, seed2 : positive := 1234;
+        variable rand         : real;
+    begin
+        wait until reset = '1';
+        while true loop
+            wait until falling_edge(clk);
+            uniform(seed1, seed2, rand);
+            -- ~70% vremena ready je '1', ~30% vremena pravi backpressure ('0')
+            if rand > 0.3 then
+                out_tready <= '1';
+            else
+                out_tready <= '0';
+            end if;
+        end loop;
+    end process;
 
     -- stimulus
     stim_process : process
         variable tv : line;
+        variable seed1, seed2 : positive := 5678;
+        variable rand  : real;
     begin
         -- reset sekvenca
         reset <= '0';
@@ -94,7 +116,7 @@ begin
         reset <= '1';
     
         --upis koeficijenata
-        s_axis_tdata <= (others=>'0');
+        in_tdata <= (others=>'0');
         wait until falling_edge(clk);
         for i in 0 to FILTER_ORDER loop
             write_en <= '1';
@@ -109,23 +131,36 @@ begin
         -- slanje ulaznih odbiraka
         while not endfile(input_test_vector) loop
             wait until falling_edge(clk);
-    
-            readline(input_test_vector, tv);
-            s_axis_tdata  <= to_std_logic_vector(string(tv));
-            s_axis_tvalid <= '1';
             
-            if endfile(input_test_vector) then
-                s_axis_tlast <= '1';
-            else
-                s_axis_tlast <= '0';
+            -- povremeno pauziraj slanje 
+            uniform(seed1, seed2, rand);
+            if rand < 0.2 then
+                in_tvalid <= '0';
+                wait for PERIOD * 2;
+                wait until falling_edge(clk);
             end if;
     
-            wait until rising_edge(clk) and s_axis_tready = '1';
+            readline(input_test_vector, tv);
+            in_tdata  <= to_std_logic_vector(string(tv));
+            in_tvalid <= '1';
+            
+            if endfile(input_test_vector) then
+                in_tlast <= '1';
+            else
+                in_tlast <= '0';
+            end if;
+            
+            -- čekaj dok se ne desi handshake
+    
+            loop
+                wait until rising_edge(clk);
+                exit when in_tready = '1';
+            end loop;
         end loop;
     
         wait until falling_edge(clk);
-        s_axis_tvalid <= '0';
-        s_axis_tlast  <= '0';
+        in_tvalid <= '0';
+        in_tlast  <= '0';
     
         -- čekanje da izlazni podaci prođu kroz pipeline
         wait for PERIOD * LATENCY;
@@ -143,17 +178,45 @@ begin
         while true loop
             wait until rising_edge(clk);
             
-            if m_axis_tvalid = '1' and m_axis_tready = '1' then
+            if out_tvalid = '1' and out_tready = '1' then
                 if not endfile(output_check_vector) then
                     readline(output_check_vector, check_v);
                     expected_val := to_std_logic_vector(string(check_v));
 
-                    if(abs(signed(expected_val) - signed(m_axis_tdata)) > "000000000000000000000111") then
-                        report "result mismatch!" severity error;
+                    if(abs(signed(expected_val) - signed(out_tdata)) > "000000000000000000000111") then
+                        report "Result mismatch! " &
+                               "Expected: 0x" & to_hstring(expected_val) & 
+                               " | Got: 0x" & to_hstring(out_tdata)
+                        severity error;
                     end if;
                 end if;
             end if;
         end loop;
+    end process;
+    
+    axi_master_checker : process
+        variable prev_data : std_logic_vector(OUT_WIDTH - 1 downto 0);
+        variable prev_last : std_logic;
+    begin
+        wait until rising_edge(clk);
+        
+        -- ako je out_tvalid postavljen ('1'), a tready nije bio '1',
+        -- podaci i TLAST moraju ostati zamrznuti u sledećem taktu
+        if out_tvalid = '1' and out_tready = '0' then
+            prev_data := out_tdata;
+            prev_last := out_tlast;
+            
+            wait until rising_edge(clk);
+            
+            if out_tvalid = '1' then
+                assert out_tdata = prev_data 
+                    report "AXI VIOLATION: out_tdata se promenio pre TREADY handshake-a!" severity failure;
+                assert out_tlast = prev_last 
+                    report "AXI VIOLATION: out_tlast se promenio pre TREADY handshake-a!" severity failure;
+            else
+                report "AXI VIOLATION: out_tvalid je spušten na 0 bez TREADY handshake-a!" severity failure;
+            end if;
+        end if;
     end process;
 
 end architecture behavioral;

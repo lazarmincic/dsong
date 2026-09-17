@@ -14,14 +14,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="4,883.099 ns"></ZoomEndTime>
-      <Cursor1Time time="2,200.000 ns"></Cursor1Time>
+      <ZoomEndTime time="2,200.001 ns"></ZoomEndTime>
+      <Cursor1Time time="0.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="138"></NameColumnWidth>
+      <NameColumnWidth column_width="118"></NameColumnWidth>
       <ValueColumnWidth column_width="58"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="27" />
+   <WVObjectSize size="31" />
    <wvobject fp_name="/fir_filter_ft_tb/clk" type="logic">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
@@ -30,9 +30,9 @@
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/s_axis_tdata" type="array">
-      <obj_property name="ElementShortName">s_axis_tdata[23:0]</obj_property>
-      <obj_property name="ObjectShortName">s_axis_tdata[23:0]</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/in_tdata" type="array">
+      <obj_property name="ElementShortName">in_tdata[23:0]</obj_property>
+      <obj_property name="ObjectShortName">in_tdata[23:0]</obj_property>
       <obj_property name="Radix">REALRADIX</obj_property>
       <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
       <obj_property name="radix_fractionWidth">23</obj_property>
@@ -40,21 +40,25 @@
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/s_axis_tvalid" type="logic">
-      <obj_property name="ElementShortName">s_axis_tvalid</obj_property>
-      <obj_property name="ObjectShortName">s_axis_tvalid</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/in_tvalid" type="logic">
+      <obj_property name="ElementShortName">in_tvalid</obj_property>
+      <obj_property name="ObjectShortName">in_tvalid</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/s_axis_tready" type="logic">
-      <obj_property name="ElementShortName">s_axis_tready</obj_property>
-      <obj_property name="ObjectShortName">s_axis_tready</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/in_tready" type="logic">
+      <obj_property name="ElementShortName">in_tready</obj_property>
+      <obj_property name="ObjectShortName">in_tready</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/s_axis_tlast" type="logic">
-      <obj_property name="ElementShortName">s_axis_tlast</obj_property>
-      <obj_property name="ObjectShortName">s_axis_tlast</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/in_tlast" type="logic">
+      <obj_property name="ElementShortName">in_tlast</obj_property>
+      <obj_property name="ObjectShortName">in_tlast</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/m_axis_tdata" type="array">
-      <obj_property name="ElementShortName">m_axis_tdata[23:0]</obj_property>
-      <obj_property name="ObjectShortName">m_axis_tdata[23:0]</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/uut/clk_en" type="logic">
+      <obj_property name="ElementShortName">clk_en</obj_property>
+      <obj_property name="ObjectShortName">clk_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/fir_filter_ft_tb/out_tdata" type="array">
+      <obj_property name="ElementShortName">out_tdata[23:0]</obj_property>
+      <obj_property name="ObjectShortName">out_tdata[23:0]</obj_property>
       <obj_property name="Radix">REALRADIX</obj_property>
       <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
       <obj_property name="radix_fractionWidth">23</obj_property>
@@ -62,17 +66,21 @@
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/m_axis_tvalid" type="logic">
-      <obj_property name="ElementShortName">m_axis_tvalid</obj_property>
-      <obj_property name="ObjectShortName">m_axis_tvalid</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/uut/in_tvalid_sr" type="array">
+      <obj_property name="ElementShortName">in_tvalid_sr[21:0]</obj_property>
+      <obj_property name="ObjectShortName">in_tvalid_sr[21:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/m_axis_tready" type="logic">
-      <obj_property name="ElementShortName">m_axis_tready</obj_property>
-      <obj_property name="ObjectShortName">m_axis_tready</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/out_tvalid" type="logic">
+      <obj_property name="ElementShortName">out_tvalid</obj_property>
+      <obj_property name="ObjectShortName">out_tvalid</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/m_axis_tlast" type="logic">
-      <obj_property name="ElementShortName">m_axis_tlast</obj_property>
-      <obj_property name="ObjectShortName">m_axis_tlast</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/out_tready" type="logic">
+      <obj_property name="ElementShortName">out_tready</obj_property>
+      <obj_property name="ObjectShortName">out_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/fir_filter_ft_tb/out_tlast" type="logic">
+      <obj_property name="ElementShortName">out_tlast</obj_property>
+      <obj_property name="ObjectShortName">out_tlast</obj_property>
    </wvobject>
    <wvobject fp_name="/fir_filter_ft_tb/write_en" type="logic">
       <obj_property name="ElementShortName">write_en</obj_property>
@@ -102,9 +110,17 @@
       <obj_property name="ElementShortName">MAC_NUM</obj_property>
       <obj_property name="ObjectShortName">MAC_NUM</obj_property>
    </wvobject>
+   <wvobject fp_name="/fir_filter_ft_tb/VOTER_PAIR_NUM" type="other">
+      <obj_property name="ElementShortName">VOTER_PAIR_NUM</obj_property>
+      <obj_property name="ObjectShortName">VOTER_PAIR_NUM</obj_property>
+   </wvobject>
    <wvobject fp_name="/fir_filter_ft_tb/PERIOD" type="other">
       <obj_property name="ElementShortName">PERIOD</obj_property>
       <obj_property name="ObjectShortName">PERIOD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/fir_filter_ft_tb/LATENCY" type="other">
+      <obj_property name="ElementShortName">LATENCY</obj_property>
+      <obj_property name="ObjectShortName">LATENCY</obj_property>
    </wvobject>
    <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/\gen_mac_units(0)\/mac_inst/acc_o" type="array">
       <obj_property name="DisplayName">label</obj_property>

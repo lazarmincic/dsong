@@ -17,16 +17,16 @@ entity fir_filter_ft is
         reset : in  std_logic; -- aktivan na '0'
         
         -- axi stream slave
-        s_axis_tdata    : in  std_logic_vector(IN_WIDTH - 1 downto 0);
-        s_axis_tvalid   : in  std_logic;
-        s_axis_tready   : out std_logic;
-        s_axis_tlast    : in  std_logic;
+        in_tdata    : in  std_logic_vector(IN_WIDTH - 1 downto 0);
+        in_tvalid   : in  std_logic;
+        in_tready   : out std_logic;
+        in_tlast    : in  std_logic;
         
         -- axi stream master
-        m_axis_tdata    : out std_logic_vector(OUT_WIDTH - 1 downto 0);
-        m_axis_tvalid   : out std_logic;
-        m_axis_tready   : in  std_logic;
-        m_axis_tlast    : out std_logic;
+        out_tdata    : out std_logic_vector(OUT_WIDTH - 1 downto 0);
+        out_tvalid   : out std_logic;
+        out_tready   : in  std_logic;
+        out_tlast    : out std_logic;
         
         write_en : in std_logic;
         coef_addr_i : std_logic_vector(log2c(FILTER_ORDER+1)-1 downto 0);
@@ -48,20 +48,21 @@ architecture rtl of fir_filter_ft is
     constant LSB_IDX : natural := (2 * IN_WIDTH) - OUT_WIDTH - 1;
 
     -- pipeline kašnjenje : 2 registra u DSP-u + 0 u glasaču
-    constant LATENCY : positive := 2 + FILTER_ORDER; 
+    constant LATENCY : positive := FILTER_ORDER + 2 ; 
     -- shift registar dužine LATENCY za tlast signal
-    signal tlast_sr : std_logic_vector(LATENCY-1 downto 0);
-    signal tvalid_sr : std_logic_vector(LATENCY-1 downto 0);
+    signal in_tlast_sr : std_logic_vector(LATENCY-1 downto 0);
+    signal in_tvalid_sr : std_logic_vector(LATENCY-1 downto 0);
 
     signal clk_en: std_logic;
-    
-    signal s_ready_sig : std_logic;
     
     type coef_t is array (FILTER_ORDER downto 0) of std_logic_vector(IN_WIDTH-1 downto 0);
     signal coeffs : coef_t := (others=>(others=>'0')); 
     
     type sample_chain_type is array (0 to NUM_STAGES-1) of std_logic_vector(IN_WIDTH - 1 downto 0);
     signal sample_chain : sample_chain_type := (others=>(others=>'0')); 
+    
+    signal out_tlast_s : std_logic;
+    signal out_tvalid_s : std_logic;
     
 begin
 
@@ -76,9 +77,9 @@ begin
     end process;
     
     -- registri za pipeline
-    process(clk, s_axis_tdata)
+    process(clk, in_tdata)
     begin
-        sample_chain(0) <= s_axis_tdata;
+        sample_chain(0) <= in_tdata;
         if rising_edge(clk) then
             if reset = '0' then
                 sample_chain(1 to NUM_STAGES-1) <= (others => (others => '0'));
@@ -113,40 +114,39 @@ begin
             );
     end generate GEN_FIR_STAGES;
 
-    m_axis_tdata <= acc_chain(NUM_STAGES)(MSB_IDX downto LSB_IDX);
+    out_tdata <= acc_chain(NUM_STAGES)(MSB_IDX downto LSB_IDX);
     
-    -- shift registar
+    -- axi
     process(clk)
     begin
         if rising_edge(clk) then
             if reset = '0' then
-                tvalid_sr <= (others => '0');
-                tlast_sr  <= (others => '0');
-            elsif clk_en = '1' then
+                in_tvalid_sr <= (others => '0');
+                in_tlast_sr  <= (others => '0');
+            elsif (out_tready and clk_en) then 
+            --else
             
-                tvalid_sr(0) <= s_axis_tvalid;
+                in_tvalid_sr(0) <= in_tvalid;
+                in_tlast_sr(0) <= in_tlast; 
+                -- Pomeranje kroz sve stupnjeve pipeline-a   
                 for i in 1 to LATENCY - 1 loop
-                    tvalid_sr(i) <= tvalid_sr(i - 1);
-                end loop;
-                
-                tlast_sr(0) <= s_axis_tlast;               
-                -- Pomeranje kroz sve stupnjeve pipeline-a
-                for i in 1 to LATENCY - 1 loop
-                    tlast_sr(i) <= tlast_sr(i - 1);
+                    in_tvalid_sr(i) <= in_tvalid_sr(i - 1);
+                    in_tlast_sr(i) <= in_tlast_sr(i - 1);
                 end loop;
             end if;
         end if;
     end process;
-
-    -- Izlazni TLAST 
-    m_axis_tlast <= tlast_sr(LATENCY - 1);
     
     -- Izlazni TVALID
-    m_axis_tvalid <= tvalid_sr(LATENCY - 1);
+    out_tvalid_s <= in_tvalid_sr(LATENCY - 1);
+    out_tvalid <= out_tvalid_s and clk_en;
+
+    in_tready <= out_tready; --clk_en;
     
-    s_ready_sig <= m_axis_tready or (not tvalid_sr(LATENCY - 1));
-    s_axis_tready <= s_ready_sig;
-    
-    clk_en <= (s_axis_tvalid or tvalid_sr(LATENCY - 1)) and s_ready_sig;
+    clk_en <= (in_tvalid and out_tready) or ((or in_tlast_sr) and out_tready) ;   
+
+    -- Izlazni TLAST 
+    out_tlast_s <= in_tlast_sr(LATENCY - 1);
+    out_tlast <= out_tlast_s;
 
 end architecture rtl;
