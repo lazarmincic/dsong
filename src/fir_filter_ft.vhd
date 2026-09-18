@@ -50,16 +50,16 @@ architecture rtl of fir_filter_ft is
     -- pipeline kašnjenje : 2 registra u DSP-u + 0 u glasaču
     constant LATENCY : positive := FILTER_ORDER + 4 ; 
     -- shift registar dužine LATENCY za tlast signal
-    signal in_tlast_sr : std_logic_vector(LATENCY-1 downto 0);
-    signal in_tvalid_sr : std_logic_vector(LATENCY-1 downto 0);
-
-    signal clk_en: std_logic;
+    signal stage_last : std_logic_vector(LATENCY-1 downto 0);
+    signal stage_valid : std_logic_vector(LATENCY-1 downto 0);
     
     type coef_t is array (FILTER_ORDER downto 0) of std_logic_vector(IN_WIDTH-1 downto 0);
     signal coeffs : coef_t := (others=>(others=>'0')); 
     
     type sample_chain_type is array (0 to NUM_STAGES-1) of std_logic_vector(IN_WIDTH - 1 downto 0);
     signal sample_chain : sample_chain_type := (others=>(others=>'0')); 
+    
+    signal pipe_en : std_logic_vector (LATENCY-1 downto 0);
     
 begin
 
@@ -79,20 +79,24 @@ begin
         if rising_edge(clk) then
             if reset = '0' then
                 sample_chain <= (others => (others => '0'));
-            elsif clk_en = '1' then
-                sample_chain(0) <= in_tdata; 
+            else
+                if pipe_en(0) = '1' then
+                    sample_chain(0) <= in_tdata; 
+                end if;
                 for i in 1 to NUM_STAGES-1 loop
-                    sample_chain(i) <= sample_chain(i - 1);
+                    if pipe_en(i) = '1' then
+                        sample_chain(i) <= sample_chain(i - 1);
+                    end if;
                 end loop;
             end if;
         end if;
-    end process;
+    end process; 
 
     -- prvi stepen
     acc_chain(0) <= (others => '0');
 
     -- povezivanje 
-    GEN_FIR_STAGES : for i in 0 to FILTER_ORDER generate
+    gen_stages : for i in 0 to FILTER_ORDER generate
     begin
         stage_inst : entity work.fir_stage_ft
             generic map (
@@ -107,9 +111,10 @@ begin
                 coeff_i => coeffs(i),
                 acc_i => acc_chain(i),              
                 acc_o => acc_chain(i + 1),          
-                clk_en => clk_en
+                mult_en => pipe_en(i+1),
+                acc_en => pipe_en(i+2)
             );
-    end generate GEN_FIR_STAGES;
+    end generate gen_stages;
 
     -- registar na izlazu
     process(clk)
@@ -117,7 +122,7 @@ begin
         if rising_edge(clk) then
             if reset = '0' then
                 out_tdata <= (others => '0');
-            elsif clk_en = '1' then
+            elsif pipe_en(LATENCY-1) = '1' then
                 out_tdata <= acc_chain(NUM_STAGES)(MSB_IDX downto LSB_IDX);
             end if;
         end if;
@@ -128,30 +133,36 @@ begin
     begin
         if rising_edge(clk) then
             if reset = '0' then
-                in_tvalid_sr <= (others => '0');
-                in_tlast_sr  <= (others => '0');
-            elsif (clk_en) then 
-            --else
-            
-                in_tvalid_sr(0) <= in_tvalid  ;
-                in_tlast_sr(0) <= in_tlast  ; 
-                -- Pomeranje kroz sve stupnjeve pipeline-a   
+                stage_valid <= (others => '0');
+                stage_last  <= (others => '0');
+            else
+                if pipe_en(0) = '1' then
+                    stage_valid(0) <= in_tvalid  ;
+                    stage_last(0) <= in_tlast  ; 
+                end if;
+                -- Pomeranje kroz sve stepene pipeline-a   
                 for i in 1 to LATENCY - 1 loop
-                    in_tvalid_sr(i) <= in_tvalid_sr(i - 1);
-                    in_tlast_sr(i) <= in_tlast_sr(i - 1);
+                    if pipe_en(i) = '1' then
+                        stage_valid(i) <= stage_valid(i - 1);
+                        stage_last(i) <= stage_last(i - 1);
+                    end if;
                 end loop;
             end if;
         end if;
     end process;
     
-    -- Izlazni TVALID
-    out_tvalid <= in_tvalid_sr(LATENCY - 1);
-
-    in_tready <= clk_en;
+    gen_pipe_en : for i in 0 to LATENCY-2 generate
+    begin
+        pipe_en(i) <= pipe_en(i+1) or (not stage_valid(i));
+    end generate gen_pipe_en;
+    pipe_en(LATENCY-1) <= out_tready or (not stage_valid(LATENCY-1));
     
-    clk_en <=  not (out_tvalid and not out_tready ) ;   
- 
+    in_tready <= pipe_en(0);
+    
+    -- Izlazni TVALID
+    out_tvalid <= stage_valid(LATENCY - 1);
+  
     -- Izlazni TLAST 
-    out_tlast <= in_tlast_sr(LATENCY - 1);
+    out_tlast <= stage_last(LATENCY - 1);
 
 end architecture rtl;

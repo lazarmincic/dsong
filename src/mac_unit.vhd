@@ -14,7 +14,8 @@ entity mac_unit is
         acc_i : in std_logic_vector(SAMPLE_WIDTH*2-1 downto 0);
         acc_o : out std_logic_vector(SAMPLE_WIDTH*2-1 downto 0);
         
-        clk_en : in std_logic -- za AXI S
+        mult_en : in std_logic; -- za AXI S
+        acc_en : in std_logic
     );
 end entity mac_unit;
 
@@ -36,15 +37,19 @@ begin
                 mult_s <= (others => '0');
                 acc_s <= (others => '0');
                 acc_i_s <= (others => '0');
-            elsif clk_en = '1' then
+            else
                 -- Ulazni registri
                 acc_i_s <= acc_i;
                 
-                -- množenje
-                mult_s <= std_logic_vector(signed(sample_i) * signed(coeff_i));
+                if mult_en = '1' then
+                    -- množenje
+                    mult_s <= std_logic_vector(signed(sample_i) * signed(coeff_i));
+                end if;
                 
-                -- sabiranje
-                acc_s <= std_logic_vector(signed(mult_s) + signed(acc_i_s));
+                if acc_en = '1' then
+                    -- sabiranje
+                    acc_s <= std_logic_vector(signed(mult_s) + signed(acc_i_s));
+                end if;
                 
             end if;
         end if;

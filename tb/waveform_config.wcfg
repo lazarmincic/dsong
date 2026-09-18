@@ -13,19 +13,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="2,200.001 ns"></ZoomEndTime>
-      <Cursor1Time time="0.000 ns"></Cursor1Time>
+      <ZoomStartTime time="1,293.512 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,723.013 ns"></ZoomEndTime>
+      <Cursor1Time time="1,535.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="118"></NameColumnWidth>
+      <NameColumnWidth column_width="114"></NameColumnWidth>
       <ValueColumnWidth column_width="58"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="31" />
-   <wvobject fp_name="/fir_filter_ft_tb/clk" type="logic">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
-   </wvobject>
+   <WVObjectSize size="20" />
    <wvobject fp_name="/fir_filter_ft_tb/reset" type="logic">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
@@ -52,9 +48,9 @@
       <obj_property name="ElementShortName">in_tlast</obj_property>
       <obj_property name="ObjectShortName">in_tlast</obj_property>
    </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/clk_en" type="logic">
-      <obj_property name="ElementShortName">clk_en</obj_property>
-      <obj_property name="ObjectShortName">clk_en</obj_property>
+   <wvobject fp_name="/fir_filter_ft_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
    <wvobject fp_name="/fir_filter_ft_tb/out_tdata" type="array">
       <obj_property name="ElementShortName">out_tdata[23:0]</obj_property>
@@ -65,10 +61,6 @@
       <obj_property name="radix_otherWidth">0</obj_property>
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/in_tvalid_sr" type="array">
-      <obj_property name="ElementShortName">in_tvalid_sr[21:0]</obj_property>
-      <obj_property name="ObjectShortName">in_tvalid_sr[21:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/fir_filter_ft_tb/out_tvalid" type="logic">
       <obj_property name="ElementShortName">out_tvalid</obj_property>
@@ -121,59 +113,5 @@
    <wvobject fp_name="/fir_filter_ft_tb/LATENCY" type="other">
       <obj_property name="ElementShortName">LATENCY</obj_property>
       <obj_property name="ObjectShortName">LATENCY</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/\gen_mac_units(0)\/mac_inst/acc_o" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">acc_o[47:0]</obj_property>
-      <obj_property name="ObjectShortName">acc_o[47:0]</obj_property>
-      <obj_property name="label">MAC_00_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/\gen_mac_units(1)\/mac_inst/acc_o" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">acc_o[47:0]</obj_property>
-      <obj_property name="ObjectShortName">acc_o[47:0]</obj_property>
-      <obj_property name="label">MAC_01_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/\gen_mac_units(2)\/mac_inst/acc_o" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">acc_o[47:0]</obj_property>
-      <obj_property name="ObjectShortName">acc_o[47:0]</obj_property>
-      <obj_property name="label">MAC_02_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(0)\/pair_inst/voter_a/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_0a_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(0)\/pair_inst/voter_b/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_0b_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(1)\/pair_inst/voter_a/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_1a_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(1)\/pair_inst/voter_b/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_1b_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(2)\/pair_inst/voter_a/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_2a_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/fir_filter_ft_tb/uut/\GEN_FIR_STAGES(0)\/stage_inst/voter_inst/\gen_pairs(2)\/pair_inst/voter_b/output" type="array">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">output[47:0]</obj_property>
-      <obj_property name="ObjectShortName">output[47:0]</obj_property>
-      <obj_property name="label">VOT_2b_out</obj_property>
    </wvobject>
 </wave_config>
