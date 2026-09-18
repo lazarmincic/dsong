@@ -46,7 +46,7 @@ architecture behavioral of fir_filter_ft_tb is
     file output_check_vector : text open read_mode is "expected.txt";
     file input_coef          : text open read_mode is "coef.txt";
     
-    constant LATENCY : natural := FILTER_ORDER + 2;
+    constant LATENCY : natural := FILTER_ORDER + 4;
     
     
 
@@ -132,14 +132,14 @@ begin
         while not endfile(input_test_vector) loop
             wait until falling_edge(clk);
             
-            -- povremeno pauziraj slanje 
+            -- Povremeno pauziraj slanje 
             uniform(seed1, seed2, rand);
             if rand < 0.2 then
                 in_tvalid <= '0';
                 wait for PERIOD * 2;
                 wait until falling_edge(clk);
             end if;
-    
+        
             readline(input_test_vector, tv);
             in_tdata  <= to_std_logic_vector(string(tv));
             in_tvalid <= '1';
@@ -150,11 +150,13 @@ begin
                 in_tlast <= '0';
             end if;
             
-            -- čekaj dok se ne desi handshake
-    
+            -- Čekaj na uzlaznoj ivici i proveri da li je prihvaćen
             loop
                 wait until rising_edge(clk);
-                exit when in_tready = '1';
+                -- Ako je in_tready bio '1' dok je in_tvalid bio '1', handshake je uspeo!
+                if in_tready = '1' then
+                    exit;
+                end if;
             end loop;
         end loop;
     
@@ -197,25 +199,27 @@ begin
     axi_master_checker : process
         variable prev_data : std_logic_vector(OUT_WIDTH - 1 downto 0);
         variable prev_last : std_logic;
+        variable was_stalled : boolean := false;
     begin
         wait until rising_edge(clk);
         
-        -- ako je out_tvalid postavljen ('1'), a tready nije bio '1',
-        -- podaci i TLAST moraju ostati zamrznuti u sledećem taktu
+        -- Ako je u prošlom taktu bio validan podatak koji NIJE preuzet
+        if was_stalled then
+            assert out_tvalid = '1' 
+                report "AXI VIOLATION: out_tvalid pao na 0 pre TREADY-ja!" severity failure;
+            assert out_tdata = prev_data 
+                report "AXI VIOLATION: out_tdata se promenio pre TREADY-ja!" severity failure;
+            assert out_tlast = prev_last 
+                report "AXI VIOLATION: out_tlast se promenio pre TREADY-ja!" severity failure;
+        end if;
+    
+        -- Proveri trenutno stanje na novoj ivici
         if out_tvalid = '1' and out_tready = '0' then
-            prev_data := out_tdata;
-            prev_last := out_tlast;
-            
-            wait until rising_edge(clk);
-            
-            if out_tvalid = '1' then
-                assert out_tdata = prev_data 
-                    report "AXI VIOLATION: out_tdata se promenio pre TREADY handshake-a!" severity failure;
-                assert out_tlast = prev_last 
-                    report "AXI VIOLATION: out_tlast se promenio pre TREADY handshake-a!" severity failure;
-            else
-                report "AXI VIOLATION: out_tvalid je spušten na 0 bez TREADY handshake-a!" severity failure;
-            end if;
+            was_stalled := true;
+            prev_data   := out_tdata;
+            prev_last   := out_tlast;
+        else
+            was_stalled := false;
         end if;
     end process;
 

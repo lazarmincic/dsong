@@ -48,7 +48,7 @@ architecture rtl of fir_filter_ft is
     constant LSB_IDX : natural := (2 * IN_WIDTH) - OUT_WIDTH - 1;
 
     -- pipeline kašnjenje : 2 registra u DSP-u + 0 u glasaču
-    constant LATENCY : positive := FILTER_ORDER + 2 ; 
+    constant LATENCY : positive := FILTER_ORDER + 4 ; 
     -- shift registar dužine LATENCY za tlast signal
     signal in_tlast_sr : std_logic_vector(LATENCY-1 downto 0);
     signal in_tvalid_sr : std_logic_vector(LATENCY-1 downto 0);
@@ -60,9 +60,6 @@ architecture rtl of fir_filter_ft is
     
     type sample_chain_type is array (0 to NUM_STAGES-1) of std_logic_vector(IN_WIDTH - 1 downto 0);
     signal sample_chain : sample_chain_type := (others=>(others=>'0')); 
-    
-    signal out_tlast_s : std_logic;
-    signal out_tvalid_s : std_logic;
     
 begin
 
@@ -77,13 +74,13 @@ begin
     end process;
     
     -- registri za pipeline
-    process(clk, in_tdata)
+    process(clk)
     begin
-        sample_chain(0) <= in_tdata;
         if rising_edge(clk) then
             if reset = '0' then
-                sample_chain(1 to NUM_STAGES-1) <= (others => (others => '0'));
+                sample_chain <= (others => (others => '0'));
             elsif clk_en = '1' then
+                sample_chain(0) <= in_tdata; 
                 for i in 1 to NUM_STAGES-1 loop
                     sample_chain(i) <= sample_chain(i - 1);
                 end loop;
@@ -114,7 +111,17 @@ begin
             );
     end generate GEN_FIR_STAGES;
 
-    out_tdata <= acc_chain(NUM_STAGES)(MSB_IDX downto LSB_IDX);
+    -- registar na izlazu
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '0' then
+                out_tdata <= (others => '0');
+            elsif clk_en = '1' then
+                out_tdata <= acc_chain(NUM_STAGES)(MSB_IDX downto LSB_IDX);
+            end if;
+        end if;
+    end process;
     
     -- axi
     process(clk)
@@ -123,11 +130,11 @@ begin
             if reset = '0' then
                 in_tvalid_sr <= (others => '0');
                 in_tlast_sr  <= (others => '0');
-            elsif (out_tready and clk_en) then 
+            elsif (clk_en) then 
             --else
             
-                in_tvalid_sr(0) <= in_tvalid;
-                in_tlast_sr(0) <= in_tlast; 
+                in_tvalid_sr(0) <= in_tvalid  ;
+                in_tlast_sr(0) <= in_tlast  ; 
                 -- Pomeranje kroz sve stupnjeve pipeline-a   
                 for i in 1 to LATENCY - 1 loop
                     in_tvalid_sr(i) <= in_tvalid_sr(i - 1);
@@ -138,15 +145,13 @@ begin
     end process;
     
     -- Izlazni TVALID
-    out_tvalid_s <= in_tvalid_sr(LATENCY - 1);
-    out_tvalid <= out_tvalid_s and clk_en;
+    out_tvalid <= in_tvalid_sr(LATENCY - 1);
 
-    in_tready <= out_tready; --clk_en;
+    in_tready <= clk_en;
     
-    clk_en <= (in_tvalid and out_tready) or ((or in_tlast_sr) and out_tready) ;   
-
+    clk_en <=  not (out_tvalid and not out_tready ) ;   
+ 
     -- Izlazni TLAST 
-    out_tlast_s <= in_tlast_sr(LATENCY - 1);
-    out_tlast <= out_tlast_s;
+    out_tlast <= in_tlast_sr(LATENCY - 1);
 
 end architecture rtl;
