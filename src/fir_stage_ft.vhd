@@ -18,8 +18,7 @@ entity fir_stage_ft is
          
         acc_o : out std_logic_vector(2*SAMPLE_WIDTH - 1 downto 0);
         
-        mult_en : in std_logic;  -- za AXI
-        acc_en : in std_logic
+        clk_en: in std_logic
     );
 end entity fir_stage_ft;
 
@@ -47,8 +46,7 @@ begin
                 coeff_i => coeff_i,
                 acc_i => acc_i,
                 acc_o => mac_outputs(i),
-                mult_en => mult_en,
-                acc_en => acc_en 
+                clk_en => clk_en
             );
     end generate gen_mac_units;
 

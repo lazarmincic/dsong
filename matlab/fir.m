@@ -1,64 +1,81 @@
 clear
 clc
 
-%broj bita odbirka (format je 1.23)
-word_length = 24;
-fraction_length = 23;
+%ubaciti iste vrednosti kao one u HDL-u:
+%%%%%%%%%%%%%%%%
+FILTER_ORDER = 20; 
+IN_WIDTH = 24;
+OUT_WIDTH = 32;
+%%%%%%%%%%%%%%%%
+
+word_len_in = IN_WIDTH;
+
+word_len_out = OUT_WIDTH;
+
 fs = 22050;
 f1 = 400;
 f2 = 4000;
 
 %specifikacija NF filtra
-fir_ord = 20;
 Wn=0.1;
 %odbirci prozorske funkcije koja se koristi
-pravougaoni = rectwin(fir_ord+1);
+pravougaoni = rectwin(FILTER_ORDER+1);
 %projektovanje FIR filtara koriscenjem funkcije fir1
-b = fir1 (fir_ord, Wn, pravougaoni);
+b = fir1 (FILTER_ORDER, Wn, pravougaoni);
 a = 1;
 %diskretno vreme
-n = 0:149;
-%definisanje ulaznog signala u trajanju od 150 odbiraka
+n = 0:999;
+%definisanje ulaznog signala u trajanju od 1000 odbiraka
 u = 0.7*cos(2*pi*f1/fs*n) + 0.15*cos(2*pi*f2/fs*n);
 
-struct.mode = 'fixed';
-struct.roundmode = 'floor';
-struct.overflowmode = 'saturate';
-struct.format = [word_length fraction_length];
-q = quantizer(struct);
+b_fi = fi(b, 1, word_len_in, word_len_in-1);
+u_fi = fi(u, 1, word_len_in, word_len_in-1);
+u_fi = u_fi.';
 
-%digitalizacija diskretnog signala
-u_digital = quantize(q,u);
+acc_word_length = 2 * word_len_in;
+acc_frac_length = 2 * word_len_in - 2;
 
-%filtriranje signala pomocu formiranog filtra
-y_real = filter(b,a,u_digital);
-y_digital = quantize(q, y_real);
+out_word_length = word_len_out;
+out_frac_length = word_len_out - 1;
 
-%crtanje ulaznog i izlaznog signala
+fir_f = dsp.FIRFilter(...
+    'Structure','Direct form transposed', ...
+    'NumeratorSource','Property',...
+    'Numerator', double(b_fi), ...
+    'FullPrecisionOverride', false, ...
+    'RoundingMethod', 'Floor', ...
+    'OverflowAction', 'Wrap', ...
+    'AccumulatorDataType', 'Custom', ...
+    'CustomAccumulatorDataType', numerictype(1, acc_word_length, acc_frac_length));
+
+y_fi = fir_f(u_fi);
+
+T_out = numerictype(1, word_len_out, word_len_out-1);
+F = fimath('RoundingMethod', 'Floor', 'OverflowAction', 'Wrap');
+y_out = fi(y_fi, T_out, F);
+
+%crtanje ulaznog i izlaznog signala nakon kvantizacije
 set(gcf, 'color', 'w');
-subplot(2,1,1), stem(n,u), title('Ulazni signal u trajanju od 150 odbiraka');
-subplot(2,1,2), stem(n,y_digital), title('Izlazni signal u trajanju od 150 odbiraka racunat pomocu funkcije filter');
+subplot(2,1,1), stem(n,u_fi), title('Ulazni signal');
+subplot(2,1,2), stem(n,y_fi), title('Izlazni signal');
 
 %koeficijenti filtra
 fileIDb = fopen('coef.txt','w');
-for i=1:fir_ord+1
-    fprintf(fileIDb,num2bin(q,b(i)));
-    fprintf(fileIDb,'\n');
+for i=1:FILTER_ORDER+1
+    fprintf(fileIDb, '%s\n', bin(b_fi(i)));
 end
 fclose(fileIDb);
 
 % Ispis ulaznih vektora u datoteku
 fileIDb = fopen('input.txt','w');
-for i=1:length(u_digital)
-    fprintf(fileIDb,num2bin(q,u_digital(i)));
-    fprintf(fileIDb,'\n');
+for i=1:length(u_fi)
+    fprintf(fileIDb, '%s\n', bin(u_fi(i)));
 end
 fclose(fileIDb);
 
 % Ispis očekivanih izlaznih vektora u datoteku
 fileIDb = fopen('expected.txt','w');
-for i=1:length(y_digital)
-    fprintf(fileIDb,num2bin(q,y_digital(i)));
-    fprintf(fileIDb,'\n');
+for i=1:length(y_out)
+    fprintf(fileIDb, '%s\n', bin(y_out(i)));
 end
 fclose(fileIDb);

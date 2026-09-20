@@ -13,16 +13,17 @@ entity fir_filter_ft_tb is
     generic (
         FILTER_ORDER : positive := 20;
         IN_WIDTH     : positive := 24;
-        OUT_WIDTH    : positive := 24;
+        OUT_WIDTH    : positive := 32;
         
-        MAC_NUM : positive := 3;
-        VOTER_PAIR_NUM : positive := 3
+         -- tolerancija izmedju expected (matlab) i izlaznih vr modula
+         -- menjati po potrebi
+        TOLERANCE    : natural  := 0 
     );
 end entity fir_filter_ft_tb;
 
 architecture behavioral of fir_filter_ft_tb is
 
-    constant PERIOD : time := 10 ns; -- (100MHz+)
+    constant PERIOD : time := 10 ns; 
 
     signal clk           : std_logic := '0';
     signal reset         : std_logic := '0';
@@ -46,20 +47,20 @@ architecture behavioral of fir_filter_ft_tb is
     file output_check_vector : text open read_mode is "expected.txt";
     file input_coef          : text open read_mode is "coef.txt";
     
-    constant LATENCY : natural := FILTER_ORDER + 4;
-    
-    
+        -- konverzija Q1.23 u realni broj
+    function q1_23_to_real(val : std_logic_vector) return real is
+    begin
+        return real(to_integer(signed(val))) / (real(2.0**(OUT_WIDTH-1))); 
+    end function; 
 
 begin
 
     -- top modul
-    uut : entity work.fir_filter_ft
+    uut : entity work.axi_wrapper
         generic map (
             FILTER_ORDER => FILTER_ORDER,
             IN_WIDTH => IN_WIDTH,
-            OUT_WIDTH => OUT_WIDTH,
-            MAC_NUM => MAC_NUM,
-            VOTER_PAIR_NUM => VOTER_PAIR_NUM 
+            OUT_WIDTH => OUT_WIDTH
         )
         port map (
             clk => clk,
@@ -80,9 +81,9 @@ begin
     -- generator takta
     clk_process : process
     begin
-        clk <= '0';
-        wait for PERIOD / 2;
         clk <= '1';
+        wait for PERIOD / 2;
+        clk <= '0';
         wait for PERIOD / 2;
     end process;
     
@@ -94,8 +95,8 @@ begin
         while true loop
             wait until falling_edge(clk);
             uniform(seed1, seed2, rand);
-            -- ~70% vremena ready je '1', ~30% vremena pravi backpressure ('0')
-            if rand > 0.3 then
+            -- ~50% vremena backpressure
+            if rand > 0.5 then
                 out_tready <= '1';
             else
                 out_tready <= '0';
@@ -134,7 +135,7 @@ begin
             
             -- Povremeno pauziraj slanje 
             uniform(seed1, seed2, rand);
-            if rand < 0.2 then
+            if rand < 0.5 then
                 in_tvalid <= '0';
                 wait for PERIOD * 2;
                 wait until falling_edge(clk);
@@ -165,7 +166,13 @@ begin
         in_tlast  <= '0';
     
         -- čekanje da izlazni podaci prođu kroz pipeline
-        wait for PERIOD * LATENCY;
+        wait for PERIOD * 2 * 100;
+        
+        assert endfile(output_check_vector)
+            report "GRESKA: DUT nije generisao sve ocekivane izlazne podatke (fajl expected.txt nije procitan do kraja)!"
+            severity error;
+            
+            
         report "VERIFIKACIJA USPESNO ZAVRSENA!" severity note;
         wait;
     end process;
@@ -175,21 +182,44 @@ begin
         variable check_v : line;
         variable expected_val : std_logic_vector(OUT_WIDTH - 1 downto 0);
         variable diff : signed (OUT_WIDTH - 1 downto 0);
+        variable is_last_line : boolean;
     begin
         
         while true loop
             wait until rising_edge(clk);
             
             if out_tvalid = '1' and out_tready = '1' then
-                if not endfile(output_check_vector) then
-                    readline(output_check_vector, check_v);
-                    expected_val := to_std_logic_vector(string(check_v));
-
-                    if(abs(signed(expected_val) - signed(out_tdata)) > "000000000000000000000111") then
-                        report "Result mismatch! " &
-                               "Expected: 0x" & to_hstring(expected_val) & 
-                               " | Got: 0x" & to_hstring(out_tdata)
+                if endfile(output_check_vector) then
+                        report "GRESKA: DUT salje podatak (out_tvalid=1), a expected.txt je prazan!" 
                         severity error;
+                else
+                    while not endfile(output_check_vector) loop
+                        readline(output_check_vector, check_v);
+                        if check_v'length > 0 then
+                            exit; 
+                        end if;
+                    end loop;
+                    expected_val := to_std_logic_vector(string(check_v));
+                    is_last_line := endfile(output_check_vector);
+
+                    -- tolerancija je 7 (3 LSB-a)
+                    if(abs(signed(expected_val) - signed(out_tdata)) > to_signed(TOLERANCE, OUT_WIDTH)) then
+                        report "Result mismatch! " &
+                               "Expected: " & to_string(q1_23_to_real(expected_val), "%0.6f") & 
+                               " (0x" & to_hstring(expected_val) & ")" &
+                               " | Got: " & to_string(q1_23_to_real(out_tdata), "%0.6f") 
+                               &  " (0x" & to_hstring(out_tdata) &  ")"
+                        severity error;
+                    end if;
+                    -- last
+                    if is_last_line then
+                        assert out_tlast = '1'
+                            report "AXI VIOLATION (TLAST): Ocekivan je out_tlast='1' na poslednjoj liniji, a on je '0'!"
+                            severity error;
+                    else
+                        assert out_tlast = '0'
+                            report "AXI VIOLATION (TLAST): out_tlast je '1' pre nego sto je stigla poslednja linija!"
+                            severity error;
                     end if;
                 end if;
             end if;
@@ -203,7 +233,7 @@ begin
     begin
         wait until rising_edge(clk);
         
-        -- Ako je u prošlom taktu bio validan podatak koji NIJE preuzet
+        -- Ako je u prošlom taktu bio validan podatak koji nije preuzet
         if was_stalled then
             assert out_tvalid = '1' 
                 report "AXI VIOLATION: out_tvalid pao na 0 pre TREADY-ja!" severity failure;
