@@ -27,6 +27,9 @@ architecture rtl of mac_unit is
     signal mult_s : std_logic_vector(2*SAMPLE_WIDTH-1 downto 0) := (others => '0');
     signal acc_s : std_logic_vector(2*SAMPLE_WIDTH-1 downto 0) := (others => '0');
 
+    signal sample_i_s : std_logic_vector(SAMPLE_WIDTH-1 downto 0);
+    signal coeff_i_s : std_logic_vector(SAMPLE_WIDTH-1 downto 0);
+
 begin
 
     process(clk_i)
@@ -36,12 +39,16 @@ begin
                 mult_s <= (others => '0');
                 acc_s <= (others => '0');
                 acc_i_s <= (others => '0');
+                sample_i_s <= (others => '0');
+                coeff_i_s <= (others => '0');
             elsif clk_en = '1' then
                 -- Ulazni registri
                 acc_i_s <= acc_i;
+                sample_i_s <= sample_i;
+                coeff_i_s <= coeff_i;
                 
                 -- množenje
-                mult_s <= std_logic_vector(signed(sample_i) * signed(coeff_i));
+                mult_s <= std_logic_vector(signed(sample_i_s) * signed(coeff_i_s));
                 
                 -- sabiranje
                 acc_s <= std_logic_vector(signed(mult_s) + signed(acc_i_s));

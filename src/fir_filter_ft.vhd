@@ -11,7 +11,7 @@ entity fir_filter_ft is
         OUT_WIDTH : positive := 24; -- širina izlaznih podataka (umnožak 8)
         -- paznja! OUT_WIDTH sme biti maksimalno 2*IN_WIDTH - 1!
  
-        MAX_FAULT_TOLERANCE : natural := 1 
+        MAX_FAULT_TOLERANCE : natural := 6
         -- na nivou stepena filtra, za mac jedinicu i glasac posebno
         -- na primer, ako je 1, mac jedinica je otporna na 1 gresku, i glasac na 1.
     );
@@ -46,8 +46,8 @@ architecture rtl of fir_filter_ft is
     constant MSB_IDX : natural := (2 * IN_WIDTH) - 2;
     constant LSB_IDX : natural := (2 * IN_WIDTH) - OUT_WIDTH - 1;
 
-    -- pipeline kašnjenje : 2 registra u DSP-u + 0 u glasaču
-    constant PIPELINE_DEPTH : positive := FILTER_ORDER + 2 ; 
+    -- pipeline kašnjenje : 3 registra u DSP-u + 0 u glasaču + 2 za ulaz i izlaz
+    constant PIPELINE_DEPTH : positive := FILTER_ORDER + 3 + 2; 
     -- shift registar dužine PIPELINE_DEPTH za tlast signal
     signal last_shift : std_logic_vector(PIPELINE_DEPTH-1 downto 0);
     signal valid_shift : std_logic_vector(PIPELINE_DEPTH-1 downto 0);
@@ -58,7 +58,22 @@ architecture rtl of fir_filter_ft is
     constant MAC_NUM : positive := 2*(MAX_FAULT_TOLERANCE+1)-1;  -- broj MAC jedinica (neparan broj)
     constant VOTER_PAIR_NUM : positive := MAX_FAULT_TOLERANCE + 1;   -- broj parova glasača 
     
+    -- reg na ulazu
+    signal input_r : std_logic_vector(IN_WIDTH-1 downto 0);
+    
 begin
+
+    -- registar na ulazu
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '0' then
+                input_r <= (others => '0');
+            elsif clk_en = '1' then
+                input_r <= input;
+            end if;
+        end if;
+    end process;
 
     -- registri za pipeline
     process(clk)
@@ -67,7 +82,7 @@ begin
             if reset = '0' then
                 sample_chain <= (others => (others => '0'));
             elsif clk_en = '1' then
-                sample_chain(0) <= input; 
+                sample_chain(0) <= input_r; 
                 for i in 1 to FILTER_ORDER-1 loop
                     sample_chain(i) <= sample_chain(i - 1);
                 end loop;
@@ -87,7 +102,7 @@ begin
         port map (
             clk_i => clk,
             rst_i => reset,
-            sample_i => input,
+            sample_i => input_r,
             coeff_i => coeffs(FILTER_ORDER),
             acc_i => (others => '0'),              
             acc_o => acc_chain(0),          
@@ -113,7 +128,17 @@ begin
             );
     end generate gen_stages;
     
-    output <= acc_chain(FILTER_ORDER)(MSB_IDX downto LSB_IDX);
+    -- registar na izlazu
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '0' then
+                output <= (others => '0');
+            elsif clk_en = '1' then
+                output <= acc_chain(FILTER_ORDER)(MSB_IDX downto LSB_IDX);
+            end if;
+        end if;
+    end process;
     
     -- prenos valid i last signala
     process(clk)
