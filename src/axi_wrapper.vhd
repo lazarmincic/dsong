@@ -9,7 +9,7 @@ entity axi_wrapper is
         FILTER_ORDER : positive := 5;
         IN_WIDTH : positive := 24;
         OUT_WIDTH : positive := 32;
-        MAX_FAULT_TOLERANCE : natural := 5
+        MAX_FAULT_TOLERANCE : natural := 4
         );
     port (
         clk : in  std_logic;

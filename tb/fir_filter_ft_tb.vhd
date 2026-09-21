@@ -11,7 +11,7 @@ use work.util_pkg.all;
 
 entity fir_filter_ft_tb is
     generic (
-        FILTER_ORDER : positive := 20;
+        FILTER_ORDER : positive := 5;
         IN_WIDTH     : positive := 24;
         OUT_WIDTH    : positive := 32;
         
