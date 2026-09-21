@@ -9,6 +9,7 @@ Jedna implementacija Fault-Tolerant FIR filtra u jeziku VHDL. Na MAC jedinice pr
 * `constraints/` — XDC fajlovi sa vremenskim ograničenjima za takt.
 * `scripts/` — Tcl skripta za rekonstrukciju projekta i unošenje grešaka.
 * `matlab/` — Tekstualni fajlovi neophodni za simulaciju i skripta za njihovo generisanje napisana u jeziku MATLAB.
+* `reports/` — Izveštaji nakon implementacije modula sa različitim nivoom tolerancije na greške
 
 ## Rekonstrukcija projekta u Vivadu
 
