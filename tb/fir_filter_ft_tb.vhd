@@ -52,16 +52,29 @@ architecture behavioral of fir_filter_ft_tb is
     begin
         return real(to_integer(signed(val))) / (real(2.0**(OUT_WIDTH-1))); 
     end function; 
+    
+    component axi_wrapper is
+        port (
+             clk : in  std_logic;
+            reset : in  std_logic;
+            in_tdata    : in  std_logic_vector(IN_WIDTH - 1 downto 0);
+            in_tvalid   : in  std_logic;
+            in_tready   : out std_logic;
+            in_tlast    : in  std_logic;
+            out_tdata    : out std_logic_vector(OUT_WIDTH - 1 downto 0);
+            out_tvalid   : out std_logic;
+            out_tready   : in  std_logic;
+            out_tlast    : out std_logic;
+            write_en : in std_logic;
+            coef_addr_i : std_logic_vector(log2c(FILTER_ORDER+1)-1 downto 0);
+            coef_i : in STD_LOGIC_VECTOR (IN_WIDTH-1 downto 0)
+        );
+    end component;
 
 begin
 
     -- top modul
-    uut : entity work.axi_wrapper
-        generic map (
-            FILTER_ORDER => FILTER_ORDER,
-            IN_WIDTH => IN_WIDTH,
-            OUT_WIDTH => OUT_WIDTH
-        )
+    uut : axi_wrapper
         port map (
             clk => clk,
             reset => reset,

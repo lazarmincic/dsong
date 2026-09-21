@@ -5,8 +5,8 @@ use ieee.numeric_std.all;
  
 entity fifo is
     generic (
-        DATA_WIDTH : natural := 2*24;
-        DEPTH : integer := 40
+        DATA_WIDTH : natural;
+        DEPTH : integer
     );
     port (
         rst : in std_logic;

@@ -4,7 +4,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity mac_unit is
     generic (
-        SAMPLE_WIDTH  : natural := 24
+        SAMPLE_WIDTH  : natural
     );
     port (
         clk_i : in  std_logic;
@@ -29,6 +29,9 @@ architecture rtl of mac_unit is
 
     signal sample_i_s : std_logic_vector(SAMPLE_WIDTH-1 downto 0);
     signal coeff_i_s : std_logic_vector(SAMPLE_WIDTH-1 downto 0);
+    
+    attribute KEEP_HIERARCHY  : string;
+    attribute KEEP_HIERARCHY of rtl : architecture is "SOFT";
 
 begin
 

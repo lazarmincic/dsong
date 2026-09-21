@@ -4,14 +4,16 @@
 # promeniti pre simulacije
 set pokvari false 
 
-set scope_path "/fir_filter_ft_tb/uut/fir_inst"
+# isto kao u dizajnu
+set MAX_FAULT_TOLERANCE 1
+
+set scope_path "/fir_filter_ft_tb"
 
 set IN_WIDTH [get_value "$scope_path/IN_WIDTH"]
-set MAX_FAULT_TOLERANCE [get_value "$scope_path/MAX_FAULT_TOLERANCE"]
 set FILTER_ORDER [get_value "$scope_path/FILTER_ORDER"]
 set STAGE_NUM [expr {$FILTER_ORDER + 1}]
-set MAC_NUM [get_value "$scope_path/MAC_NUM"]
-set VOTER_PAIR_NUM [get_value "$scope_path/VOTER_PAIR_NUM"]
+set MAC_NUM [expr {$MAX_FAULT_TOLERANCE * 2 + 1}]
+set VOTER_PAIR_NUM [expr {$MAX_FAULT_TOLERANCE + 1}]
 
 set error_num [expr {$pokvari ? $MAX_FAULT_TOLERANCE+1 : $MAX_FAULT_TOLERANCE}]
 

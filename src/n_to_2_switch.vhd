@@ -6,8 +6,8 @@ use work.util_pkg.all;
 
 entity n_to_2_switch is
     generic (
-        NUM_VOTER_PAIRS : positive := 3;  -- broj parova glasača
-        DATA_WIDTH : positive := 2*24  -- širina podataka glasača
+        NUM_VOTER_PAIRS : positive;  -- broj parova glasača
+        DATA_WIDTH : positive  -- širina podataka glasača
     );
     port (
         -- izlazi iz svih glasača

@@ -6,12 +6,12 @@ use work.voter_pkg.all;
 
 entity fir_filter_ft is
     generic (
-        FILTER_ORDER : positive := 20; -- red filtra (stepen filtra je FILTER_ORDER + 1)
-        IN_WIDTH : positive := 24; -- širina ulaznih podataka (umnožak 8)
-        OUT_WIDTH : positive := 24; -- širina izlaznih podataka (umnožak 8)
+        FILTER_ORDER : positive; -- red filtra (stepen filtra je FILTER_ORDER + 1)
+        IN_WIDTH : positive; -- širina ulaznih podataka (umnožak 8)
+        OUT_WIDTH : positive; -- širina izlaznih podataka (umnožak 8)
         -- paznja! OUT_WIDTH sme biti maksimalno 2*IN_WIDTH - 1!
  
-        MAX_FAULT_TOLERANCE : natural := 6
+        MAX_FAULT_TOLERANCE : natural
         -- na nivou stepena filtra, za mac jedinicu i glasac posebno
         -- na primer, ako je 1, mac jedinica je otporna na 1 gresku, i glasac na 1.
     );
@@ -46,13 +46,13 @@ architecture rtl of fir_filter_ft is
     constant MSB_IDX : natural := (2 * IN_WIDTH) - 2;
     constant LSB_IDX : natural := (2 * IN_WIDTH) - OUT_WIDTH - 1;
 
-    -- pipeline kašnjenje : 3 registra u DSP-u + 0 u glasaču + 2 za ulaz i izlaz
-    constant PIPELINE_DEPTH : positive := FILTER_ORDER + 3 + 2; 
+    -- pipeline kašnjenje : 3 registra u DSP-u + 1 u glasaču + 2 za ulaz i izlaz
+    constant PIPELINE_DEPTH : positive := 1 + FILTER_ORDER*2 + 3 + 1 + 1; 
     -- shift registar dužine PIPELINE_DEPTH za tlast signal
     signal last_shift : std_logic_vector(PIPELINE_DEPTH-1 downto 0);
     signal valid_shift : std_logic_vector(PIPELINE_DEPTH-1 downto 0);
     
-    type sample_chain_type is array (FILTER_ORDER-1 downto 0) of std_logic_vector(IN_WIDTH - 1 downto 0);
+    type sample_chain_type is array (FILTER_ORDER*2-1 downto 0) of std_logic_vector(IN_WIDTH - 1 downto 0);
     signal sample_chain : sample_chain_type := (others=>(others=>'0')); 
     
     constant MAC_NUM : positive := 2*(MAX_FAULT_TOLERANCE+1)-1;  -- broj MAC jedinica (neparan broj)
@@ -83,7 +83,7 @@ begin
                 sample_chain <= (others => (others => '0'));
             elsif clk_en = '1' then
                 sample_chain(0) <= input_r; 
-                for i in 1 to FILTER_ORDER-1 loop
+                for i in 1 to FILTER_ORDER*2-1 loop
                     sample_chain(i) <= sample_chain(i - 1);
                 end loop;
             end if;
@@ -120,7 +120,7 @@ begin
             port map (
                 clk_i => clk,
                 rst_i => reset,
-                sample_i => sample_chain(i-1),
+                sample_i => sample_chain(2*i-1),
                 coeff_i => coeffs(FILTER_ORDER - i),
                 acc_i => acc_chain(i-1),              
                 acc_o => acc_chain(i),          

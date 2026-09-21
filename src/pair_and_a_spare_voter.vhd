@@ -5,13 +5,17 @@ use work.voter_pkg.all;
 
 entity pair_and_a_spare_voter is
     generic ( 
-        NUM_VOTER_PAIRS : positive := 3;  -- broj parova glasača
-        NUM_INPUTS : positive := 3;  -- broj ulaza svakog glasača
-        DATA_WIDTH : positive := 2*24  -- širina svakog ulaza
+        NUM_VOTER_PAIRS : positive;  -- broj parova glasača
+        NUM_INPUTS : positive;  -- broj ulaza svakog glasača
+        DATA_WIDTH : positive  -- širina svakog ulaza
     );
     port (
         inputs : in  std_logic_vector_array(0 to (NUM_VOTER_PAIRS * NUM_INPUTS) - 1)(DATA_WIDTH - 1 downto 0);
-        output : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+        output : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        
+        clk: in std_logic;
+        rst: in std_logic;
+        clk_en : in std_logic
     );
 end entity pair_and_a_spare_voter;
 
@@ -40,7 +44,10 @@ begin
             port map (
                 inputs => current_pair_inputs,
                 output => pair_outputs(i),
-                error_detected => pair_errors(i)
+                error_detected => pair_errors(i),
+                clk => clk,
+                rst => rst,
+                clk_en => clk_en
             );
 
     end generate gen_pairs;

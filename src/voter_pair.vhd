@@ -5,14 +5,18 @@ use work.voter_pkg.all;
 
 entity voter_pair is
     generic (
-        NUM_INPUTS : positive := 3;  -- broj ulaza glasača (broj mac jedinica)
-        DATA_WIDTH : positive := 2*24  -- širina ulaznih podataka (izlaz iz mac jedinice)
+        NUM_INPUTS : positive;  -- broj ulaza glasača (broj mac jedinica)
+        DATA_WIDTH : positive  -- širina ulaznih podataka (izlaz iz mac jedinice)
     );
     port (
         inputs : in std_logic_vector_array(0 to NUM_INPUTS - 1)(DATA_WIDTH - 1 downto 0);
         output : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         -- izlazni signal greške
-        error_detected : out std_logic
+        error_detected : out std_logic;
+        
+        clk: in std_logic;
+        rst: in std_logic;
+        clk_en : in std_logic
     );
 end entity voter_pair;
 
@@ -28,7 +32,10 @@ begin
         )
         port map (
             inputs => inputs,
-            output => out_a
+            output => out_a,
+            clk => clk,
+            rst => rst,
+            clk_en => clk_en
         );
 
     voter_b : entity work.majority_voter
@@ -38,7 +45,10 @@ begin
         )
         port map (
             inputs => inputs,
-            output => out_b
+            output => out_b,
+            clk => clk,
+            rst => rst,
+            clk_en => clk_en
         );
 
     -- komparator

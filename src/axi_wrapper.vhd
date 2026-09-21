@@ -5,10 +5,11 @@ use work.util_pkg.all;
 use work.voter_pkg.all;  
 
 entity axi_wrapper is
-    generic (
+    generic ( 
         FILTER_ORDER : positive := 20;
         IN_WIDTH : positive := 24;
-        OUT_WIDTH : positive := 24
+        OUT_WIDTH : positive := 32;
+        MAX_FAULT_TOLERANCE : natural := 1
         );
     port (
         clk : in  std_logic;
@@ -83,7 +84,8 @@ begin
         generic map (
             FILTER_ORDER => FILTER_ORDER,
             IN_WIDTH => IN_WIDTH,
-            OUT_WIDTH => OUT_WIDTH
+            OUT_WIDTH => OUT_WIDTH,
+            MAX_FAULT_TOLERANCE => MAX_FAULT_TOLERANCE
         )
         port map (
             clk => clk,

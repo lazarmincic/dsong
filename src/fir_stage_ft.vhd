@@ -5,9 +5,9 @@ use work.voter_pkg.all;
 
 entity fir_stage_ft is
     generic (
-        MAC_NUM : natural := 3;  -- broj mac jedinica
-        VOTER_PAIR_NUM : natural := 3;  -- broj glasača 
-        SAMPLE_WIDTH : natural := 24
+        MAC_NUM : natural;  -- broj mac jedinica
+        VOTER_PAIR_NUM : natural;  -- broj glasača 
+        SAMPLE_WIDTH : natural
     ); 
     port (
         clk_i : in  std_logic;
@@ -66,7 +66,10 @@ begin
         )
         port map (
             inputs => voter_inputs,
-            output => acc_o
+            output => acc_o,
+            clk => clk_i,
+            rst => rst_i,
+            clk_en => clk_en
         );
 
 end architecture rtl;
