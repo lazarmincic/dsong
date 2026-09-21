@@ -6,10 +6,10 @@ use work.voter_pkg.all;
 
 entity axi_wrapper is
     generic ( 
-        FILTER_ORDER : positive := 20;
+        FILTER_ORDER : positive := 5;
         IN_WIDTH : positive := 24;
         OUT_WIDTH : positive := 32;
-        MAX_FAULT_TOLERANCE : natural := 1
+        MAX_FAULT_TOLERANCE : natural := 5
         );
     port (
         clk : in  std_logic;

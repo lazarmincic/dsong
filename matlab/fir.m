@@ -3,7 +3,7 @@ clc
 
 %ubaciti iste vrednosti kao one u HDL-u:
 %%%%%%%%%%%%%%%%
-FILTER_ORDER = 20; 
+FILTER_ORDER = 5; 
 IN_WIDTH = 24;
 OUT_WIDTH = 32;
 %%%%%%%%%%%%%%%%
