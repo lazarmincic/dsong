@@ -1,12 +1,12 @@
-# Fault-Tolerant FIR Filter (Zybo Z7-10)
+# Fault-Tolerant FIR Filter (Kintex-7)
 
 Jedna implementacija Fault-Tolerant FIR filtra u jeziku VHDL. Na MAC jedinice primenjena je NMR FT tehnika a na glasače *Pair-and-a-Spare* FT tehnika.
 
 ## Struktura repozitorijuma
 
 * `src/` — Izvorni VHDL kodovi dizajna.
-* `tb/` — Testbench fajlovi za simulaciju.
-* `constraints/` — XDC fajlovi sa vremenskim ograničenjima za takt.
+* `tb/` — Testbench fajl za simulaciju.
+* `constraints/` — XDC fajl sa vremenskim ograničenjem za takt.
 * `scripts/` — Tcl skripta za rekonstrukciju projekta i unošenje grešaka.
 * `matlab/` — Tekstualni fajlovi neophodni za simulaciju i skripta za njihovo generisanje napisana u jeziku MATLAB.
 * `reports/` — Izveštaji nakon implementacije modula sa različitim nivoom tolerancije na greške
